@@ -100,18 +100,6 @@ bool verifyCertificateAndKeyMatch(const char* serverCertPath, const char* server
         return false;
     }
 
-    unsigned char certModulus[EVP_MAX_MD_SIZE];
-    unsigned char keyModulus[EVP_MAX_MD_SIZE];
-    unsigned int certModulusLen;
-    unsigned int keyModulusLen;
-
-    if (!X509_digest(cert, EVP_sha256(), certModulus, &certModulusLen)) {
-        std::cerr << "无法计算证书模数" << std::endl;
-        X509_free(cert);
-        EVP_PKEY_free(key);
-        return false;
-    }
-
     RSA* rsa = EVP_PKEY_get1_RSA(key);
     if (!rsa) {
         std::cerr << "无法获取RSA密钥" << std::endl;
@@ -121,24 +109,38 @@ bool verifyCertificateAndKeyMatch(const char* serverCertPath, const char* server
     }
 
     const BIGNUM* n = RSA_get0_n(rsa);
-    keyModulusLen = BN_bn2bin(n, keyModulus);
-    RSA_free(rsa);
+    const unsigned int keyModulusLen = BN_num_bytes(n);
+    unsigned char keyModulus[keyModulusLen];
 
-    if (keyModulusLen <= 0) {
+    if (BN_bn2bin(n, keyModulus) != static_cast<int>(keyModulusLen)) {
         std::cerr << "无法计算密钥模数" << std::endl;
+        RSA_free(rsa);
         X509_free(cert);
         EVP_PKEY_free(key);
         return false;
     }
 
-    X509_free(cert);
-    EVP_PKEY_free(key);
+    RSA_free(rsa);
+
+    unsigned char certModulus[keyModulusLen];
+    unsigned int certModulusLen;
+
+    if (!X509_digest(cert, EVP_sha256(), certModulus, &certModulusLen)) {
+        std::cerr << "无法计算证书模数" << std::endl;
+        X509_free(cert);
+        EVP_PKEY_free(key);
+        return false;
+    }
 
     if (certModulusLen != keyModulusLen || memcmp(certModulus, keyModulus, certModulusLen) != 0) {
         std::cerr << "\033[31m客户端证书和私钥不匹配\033[0m" << std::endl;
+        X509_free(cert);
+        EVP_PKEY_free(key);
         return false;
     } else {
         std::cout << "\033[32m客户端证书和私钥匹配\033[0m" << std::endl;
+        X509_free(cert);
+        EVP_PKEY_free(key);
         return true;
     }
 }

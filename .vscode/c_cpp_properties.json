@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "Z:\\codebase\\libevent-2.1.12-stable\\include",
+                "Z:\\codebase\\openssl\\x86_64-linux-gnu\\openssl",
                 "${workspaceFolder}/**"
             ],
             "defines": [
