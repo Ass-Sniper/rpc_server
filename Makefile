@@ -13,7 +13,8 @@ MAIN_OBJ = build/main.o
 
 # 编译参数
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -O2 
+CXXFLAGS = -std=c++11 -Wall -O2
+CXXFLAGS += -DCPP11_SUPPORTED=1
 CXXFLAGS += -I./include -I/usr/include/event2 -I/usr/include/nlohmann 
 #CXXFLAGS += -Iextern/json
 LDFLAGS = -L./lib \
@@ -68,9 +69,7 @@ prepare:
 cert:
 	@echo "Generating HTTPS certificates"
 	@mkdir -p cert
-	openssl req -x509 -newkey rsa:4096 -nodes \
-		-keyout cert/server.key -out cert/server.crt -days 365 \
-		-subj "/CN=localhost"
+	@./tools/gen_cert.sh
 
 # 清理构建产物
 clean:
@@ -78,4 +77,16 @@ clean:
 	@rm -rf lib
 	@rm -f $(EXECUTABLE)
 
-.PHONY: all prepare cert clean
+# 打印编译参数和链接参数
+print-flags:
+	@echo "----------------------------------------"
+	@echo "编译参数 (CXXFLAGS):"
+	@echo "----------------------------------------"
+	@echo $(CXXFLAGS)
+	@echo "----------------------------------------"
+	@echo "链接参数 (LDFLAGS):"
+	@echo "----------------------------------------"
+	@echo $(LDFLAGS)
+	@echo "----------------------------------------"
+
+.PHONY: all prepare cert clean print-flags

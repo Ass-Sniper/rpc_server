@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <openssl/evp.h> // 添加 OpenSSL EVP 头文件包含
+#include <openssl/x509.h> // 添加 OpenSSL X509 头文件包含
+#include <openssl/pem.h> // 添加 OpenSSL PEM 头文件包含
+#include <openssl/err.h> // 添加 OpenSSL 错误处理头文件包含
 #include "framework/ioc_container.h"
 #include "framework/rpc_server.h"
 #include "services/math_service.h"
@@ -98,6 +102,59 @@ int main(int argc, char* argv[]) {
 
     if (daemon) {
         daemonize();
+    }
+
+    // 验证服务器证书和私钥匹配性
+    {
+        FILE* certFile = fopen(serverCertPath, "r");
+        FILE* keyFile = fopen(serverKeyPath, "r");
+
+        if (!certFile || !keyFile) {
+            std::cerr << "无法打开证书或密钥文件" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        X509* cert = PEM_read_X509(certFile, NULL, NULL, NULL);
+        EVP_PKEY* key = PEM_read_PrivateKey(keyFile, NULL, NULL, NULL);
+
+        fclose(certFile);
+        fclose(keyFile);
+
+        if (!cert || !key) {
+            std::cerr << "无法读取证书或密钥" << std::endl;
+            if (cert) X509_free(cert);
+            if (key) EVP_PKEY_free(key);
+            return EXIT_FAILURE;
+        }
+
+        unsigned char certModulus[EVP_MAX_MD_SIZE];
+        unsigned int certModulusLen;
+        unsigned char keyModulus[EVP_MAX_MD_SIZE];
+        unsigned int keyModulusLen;
+
+        if (!X509_digest(cert, EVP_sha256(), certModulus, &certModulusLen)) {
+            std::cerr << "无法计算证书模数" << std::endl;
+            X509_free(cert);
+            EVP_PKEY_free(key);
+            return EXIT_FAILURE;
+        }
+
+        if (!EVP_PKEY_digest(key, EVP_sha256(), keyModulus, &keyModulusLen)) {
+            std::cerr << "无法计算密钥模数" << std::endl;
+            X509_free(cert);
+            EVP_PKEY_free(key);
+            return EXIT_FAILURE;
+        }
+
+        X509_free(cert);
+        EVP_PKEY_free(key);
+
+        if (certModulusLen != keyModulusLen || memcmp(certModulus, keyModulus, certModulusLen) != 0) {
+            std::cerr << "\033[31m客户端证书和私钥不匹配\033[0m" << std::endl;
+            return EXIT_FAILURE;
+        } else {
+            std::cout << "\033[32m客户端证书和私钥匹配\033[0m" << std::endl;
+        }
     }
 
     try {

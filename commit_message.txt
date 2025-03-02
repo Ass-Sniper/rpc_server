@@ -1,0 +1,53 @@
+feat(mem_mgmt): 新增智能指针安全内存管理组件
+
+• 新增安全指针核心实现（safe_ptr.h/cpp）
+• 添加弱指针支持解决循环引用（weak_ptr.h/cpp）
+• 实现RAII锁保护机制（lock_guard.h）
+
+refactor(ioc): 重构IoC容器内存管理策略
+• 修改ServiceFactory使用SafePtr替代原生指针（ioc_container.h/cpp）
+• 优化对象生命周期管理逻辑（math_service.h/cpp, rpc_service.h）
+• 增强C++98模式下的异常安全性（ioc_container.cpp）
+
+chore(build): 更新构建配置与证书管理
+• 调整Makefile编译规则适配新组件（Makefile）
+• 清理旧构建产物（*.o, *.a, rpc_server）
+• 更新证书签发文档指南（server-cert-signing-command-guide.md）
+
+fix(cert): 优化证书生成验证流程
+• 改进gen_cert.sh的SAN扩展处理（gen_cert.sh）
+• 添加证书与私钥匹配性验证（ca.*, server.*, client.*）
+• 更新测试证书有效期至10年（cert/）
+
+docs: 补充项目文档
+• 新增提交规范文档（commit_message.txt）
+• 更新API接口响应示例（response.json）
+• 完善内存管理组件注释（*.h）
+
+-------------
+
+feat(mem_mgmt): Implement safe memory management components
+
+• Add core smart pointer implementation (safe_ptr.h/cpp)
+• Introduce weak_ptr for circular reference resolution (weak_ptr.h/cpp)
+• Implement RAII-based lock_guard mechanism (lock_guard.h)
+
+refactor(ioc): Overhaul IoC container memory strategy
+• Migrate ServiceFactory to SafePtr (ioc_container.h/cpp)
+• Optimize object lifecycle management (math_service.h/cpp, rpc_service.h)
+• Enhance C++98 exception safety (ioc_container.cpp)
+
+chore(build): Update build configurations
+• Adapt Makefile for new components (Makefile)
+• Clean legacy build artifacts (*.o, *.a, rpc_server)
+• Update cert signing documentation (server-cert-signing-command-guide.md)
+
+fix(cert): Improve certificate validation flow
+• Enhance SAN extension handling (gen_cert.sh)
+• Add cert-key pair verification (ca.*, server.*, client.*)
+• Extend test cert validity to 10 years (cert/)
+
+docs: Update project documentation
+• Add commit message guidelines (commit_message.txt)
+• Update API response examples (response.json)
+• Improve code comments for memory components (*.h)

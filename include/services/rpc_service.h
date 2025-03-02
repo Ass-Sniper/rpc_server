@@ -3,82 +3,71 @@
 #define RPC_SERVICE_H
 
 #include <string>
-#include <functional>
-#include <unordered_map>
-#include <nlohmann/json.hpp>
-
-#if 0
-
-// include/services/rpc_service.h
-#ifndef RPC_SERVICE_H
-#define RPC_SERVICE_H
-
-#include <string>
-#include <map>
 #include <stdexcept>
+#include <nlohmann/json.hpp>
+#if CPP11_SUPPORTED
+#include <unordered_map>
+#endif
 
-// C++98兼容的JSON库前置声明
-class json;  // 需确保nlohmann/json有C++98兼容版本
+// 编译器特性检测
+#if !defined(CPP11_SUPPORTED)
+    #if defined(__cplusplus) && __cplusplus >= 201103L
+        #define CPP11_SUPPORTED 1
+    #else
+        #define CPP11_SUPPORTED 0
+    #endif
+#endif
 
 class RpcService {
 public:
-    // 定义函数指针类型（带上下文）
-    typedef json (*MethodHandler)(void* context, const json& params);
+#if CPP11_SUPPORTED
+    // C++11实现版本
+    using MethodHandler = std::function<nlohmann::json(const nlohmann::json&)>;
     
-protected:
-    // 注册方法接口（带上下文指针）
+    void registerMethod(const std::string& name, MethodHandler handler) {
+        methodHandlers_[name] = handler;
+    }
+#else
+    // C++98兼容版本
+    typedef nlohmann::json (*MethodHandler)(void* context, const nlohmann::json&);
+    
+    struct HandlerInfo {
+        MethodHandler handler;
+        void* context;
+    };
+
     void registerMethod(const std::string& name, 
                        MethodHandler handler, 
                        void* context) {
         HandlerInfo info = { handler, context };
         methodHandlers_[name] = info;
     }
-
-public:
-    json executeMethod(const std::string& method, 
-                      const json& params) {
-        std::map<std::string, HandlerInfo>::iterator it = methodHandlers_.find(method);
-        if (it == methodHandlers_.end()) {
-            throw std::runtime_error("Method not found");
-        }
-        return it->second.handler(it->second.context, params);
-    }
-
-private:
-    // 处理器信息结构体
-    struct HandlerInfo {
-        MethodHandler handler;
-        void* context;
-    };
-    
-    std::map<std::string, HandlerInfo> methodHandlers_;
-};
-
-#endif  // RPC_SERVICE_H
-
 #endif
 
-class RpcService {
-public:
-    using MethodHandler = std::function<nlohmann::json(const nlohmann::json&)>;
-    
-protected:
-    void registerMethod(const std::string& name, MethodHandler handler) {
-        methodHandlers_[name] = handler;
-    }
-
-public:
     nlohmann::json executeMethod(const std::string& method, 
                                 const nlohmann::json& params) {
+#if CPP11_SUPPORTED
         auto it = methodHandlers_.find(method);
+#else
+        std::map<std::string, HandlerInfo>::iterator it = methodHandlers_.find(method);
+#endif
         if (it == methodHandlers_.end()) {
             throw std::runtime_error("Method not found");
         }
+        
+#if CPP11_SUPPORTED
         return it->second(params);
+#else
+        return it->second.handler(it->second.context, params);
+#endif
     }
 
 private:
+#if CPP11_SUPPORTED
     std::unordered_map<std::string, MethodHandler> methodHandlers_;
+#else
+    std::map<std::string, HandlerInfo> methodHandlers_;
+#endif
 };
 
-#endif
+#endif // RPC_SERVICE_H

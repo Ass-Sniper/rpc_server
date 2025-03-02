@@ -1,9 +1,14 @@
-#include "framework/rpc_server.h"
-#include "framework/ioc_container.h"
+// src/framework/rpc_server.cpp
+#include "framework/rpc_server.h" // 添加 rpc_server.h 头文件包含
+#include "framework/ioc_container.h" // 修改包含路径
 #include "services/rpc_service.h"
+#include "mem_mgmt/safe_ptr.h"
+#include "mem_mgmt/weak_ptr.h"
+#include "mem_mgmt/lock_guard.h"
 #include <event2/listener.h>
 #include <event2/buffer.h>
-#include <openssl/err.h>
+#include <openssl/ssl.h> // 添加 OpenSSL 头文件包含
+#include <openssl/err.h> // 添加 OpenSSL 错误处理头文件包含
 #include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
@@ -32,6 +37,7 @@ vector<string> RpcServer::splitUri(const string& uri) {
     return tokens;
 }
 
+// 发送成功响应
 void RpcServer::sendSuccessResponse(evhttp_request* req,
     const nlohmann::json& result,
     const nlohmann::json& id) 
@@ -52,6 +58,7 @@ void RpcServer::sendSuccessResponse(evhttp_request* req,
     evhttp_send_reply(req, HTTP_OK, nullptr, output);
 }
 
+// 发送错误响应
 void RpcServer::sendErrorResponse(evhttp_request* req,
   int code,
   const std::string& message,
@@ -92,21 +99,21 @@ RpcServer::RpcServer(int port, const char* certPath, const char* keyPath)
         throw runtime_error("SSL context creation failed");
     }
 
-    // 增强安全配置（新增部分）
+    // 增强安全配置
     SSL_CTX_set_options(sslCtx_, 
         SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |    // 禁用不安全协议
         SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |  // 仅允许TLSv1.2+
         SSL_OP_SINGLE_DH_USE |                 // 提升前向安全性
         SSL_OP_CIPHER_SERVER_PREFERENCE);      // 服务端优选加密套件
 
-    // 配置现代加密套件（新增）
+    // 配置现代加密套件
     const char* ciphers = "ECDHE-ECDSA-AES128-GCM-SHA256:"
                           "ECDHE-RSA-AES128-GCM-SHA256:"
                           "ECDHE-ECDSA-AES256-GCM-SHA384:"
                           "ECDHE-RSA-AES256-GCM-SHA384";
     SSL_CTX_set_cipher_list(sslCtx_, ciphers);
 
-    // 启用会话票据（新增性能优化）
+    // 启用会话票据
     SSL_CTX_set_num_tickets(sslCtx_, 5); // 合理数量平衡安全与性能    
 
     // 加载证书链
@@ -302,7 +309,7 @@ void RpcServer::requestHandler(evhttp_request* req, void* arg) {
             std::cout << "Audit Log: " << logEntry << std::endl;
             
         } catch (const nlohmann::json::exception& e) {
-            std::cerr << "JSON serialization error: " << e.what() << std::endl;
+            std::cerr << "JSON serialization error: " << e.what() << endl;
         }   
         #endif     
 
