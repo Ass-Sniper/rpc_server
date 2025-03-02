@@ -32,14 +32,21 @@ curl -v --cacert $CERT_FILE -X PUT -d "{}" -s -o /dev/null -w "HTTP状态码: %{
 https://$SERVER:$PORT/api
 
 echo -e "\n=== 性能测试 ==="
+
+if [ ! -f post.lua ]; then
+    echo "生成压力测试脚本..."
+    # 生成文件内容
+    cat << EOF > post.lua
+    wrk.method = "POST"
+    wrk.headers["Content-Type"] = "application/json"
+    wrk.body = '{"jsonrpc":"2.0","method":"MathService.add","params":{"a":1,"b":2}}' 
+EOF
+fi
+
 echo "简单压力测试 (10个并发, 100请求):"
 wrk -t 2 -c 10 -d 10s --timeout 2s -s post.lua https://$SERVER:$PORT/api
 
-cat <<EOF > post.lua
-wrk.method = "POST"
-wrk.headers["Content-Type"] = "application/json"
-wrk.body = '{"jsonrpc":"2.0","method":"MathService.add","params":{"a":1,"b":2}}'
-EOF
+rm post.lua response.json
 
 echo -e "\n=== Python 验证脚本 ==="
 cat <<EOF > https_test.py
