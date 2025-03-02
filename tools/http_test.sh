@@ -3,7 +3,7 @@
 SERVER="localhost"
 PORT=8443
 CERT_FILE="../cert/cert.pem"
-TEST_DATA='{"jsonrpc":"2.0","method":"mathService.add","params":{"a":5,"b":3}}'
+TEST_DATA='{"jsonrpc":"2.0","method":"MathService.add","params":{"a":5,"b":3}}'
 
 echo "=== SSL/TLS 握手测试 ==="
 openssl -d s_client -connect $SERVER:$PORT -showcerts -servername $SERVER < /dev/null 2>&1 | grep -E "SSL-Session|Protocol|Cipher"
@@ -38,7 +38,7 @@ wrk -t 2 -c 10 -d 10s --timeout 2s -s post.lua https://$SERVER:$PORT/api
 cat <<EOF > post.lua
 wrk.method = "POST"
 wrk.headers["Content-Type"] = "application/json"
-wrk.body = '{"jsonrpc":"2.0","method":"mathService.add","params":{"a":1,"b":2}}'
+wrk.body = '{"jsonrpc":"2.0","method":"MathService.add","params":{"a":1,"b":2}}'
 EOF
 
 echo -e "\n=== Python 验证脚本 ==="
@@ -52,12 +52,12 @@ cert = ("client.crt", "client.key")  # 双向认证时使用
 tests = [
     {
         "name": "正常请求",
-        "data": {"jsonrpc": "2.0", "method": "mathService.add", "params": {"a": 3, "b": 4}},
+        "data": {"jsonrpc": "2.0", "method": "MathService.add", "params": {"a": 3, "b": 4}},
         "expected": 200
     },
     {
         "name": "无效参数",
-        "data": {"jsonrpc": "2.0", "method": "mathService.add", "params": {"a": "text"}},
+        "data": {"jsonrpc": "2.0", "method": "MathService.add", "params": {"a": "text"}},
         "expected": 400
     }
 ]

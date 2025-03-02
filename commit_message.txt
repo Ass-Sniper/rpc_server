@@ -1,33 +1,47 @@
-chore(cert): 移除证书文件纳入版本控制
+refactor(rpc): 优化服务器核心逻辑与构建流程
 
-• 删除所有自动生成的证书文件（cert/*）
-• 更新.gitignore忽略证书目录
-• 完善证书生成文档说明
+• 重构RPC服务器线程模型（rpc_server.h/cpp）
+• 优化服务启动参数处理（main.cpp）
+• 调整Makefile编译依赖链（Makefile）
+• 增强HTTP测试脚本错误处理（http_test.sh）
 
-Security Considerations:
-- 私钥文件（*.key）不应提交到版本库
-- 证书文件（*.crt, *.pem）应由构建时自动生成
-- 符合Infrastructure as Code最佳实践
+重构细节：
+1. RPC服务端：
+   - 改进连接池管理策略
+   - 添加请求超时保护机制
+   - 优化报文解析性能
 
-docs: 更新证书管理指南
-• 添加证书生成流程说明
-• 注明证书文件应排除版本控制
-• 补充自动化部署注意事项
+2. 测试脚本：
+   - 增加重试逻辑（http_test.sh 第42行）
+   - 添加响应时间统计功能
+   - 改进JSON结果校验
+
+3. 构建系统：
+   - 分离调试/发布编译目标
+   - 添加静态代码分析步骤
+   - 优化对象文件依赖关系
 
 ------
 
-chore(cert): Remove certificate files from version control
+refactor(rpc): Enhance server core logic and build pipeline
 
-• Delete auto-generated cert files (cert/*)
-• Update .gitignore to exclude cert directory
-• Improve certificate generation documentation
+• Overhaul RPC server threading model (rpc_server.h/cpp)
+• Improve service startup parameter handling (main.cpp)
+• Adjust Makefile compilation dependencies (Makefile)
+• Strengthen HTTP test script error recovery (http_test.sh)
 
-Security Considerations:
-- Private keys (*.key) should not be committed
-- Certificates (*.crt, *.pem) should be generated at build-time
-- Complies with Infrastructure as Code best practices
+Key Improvements:
+1. Server-side:
+   - Connection pool management optimization
+   - Request timeout protection
+   - Protocol parsing performance boost
 
-docs: Update certificate management guidelines
-• Add certificate generation workflow
-• Specify VCS exclusion for cert files
-• Add deployment automation notes
+2. Testing:
+   - Add retry mechanism (http_test.sh L42)
+   - Introduce response time metrics
+   - Enhance JSON validation
+
+3. Build:
+   - Separate debug/release targets
+   - Integrate static code analysis
+   - Optimize object file dependencies

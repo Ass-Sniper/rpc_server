@@ -7,6 +7,7 @@
 #include "mem_mgmt/lock_guard.h"
 #include <event2/listener.h>
 #include <event2/buffer.h>
+#include <event2/bufferevent_ssl.h> // 添加 bufferevent_ssl 头文件包含
 #include <openssl/ssl.h> // 添加 OpenSSL 头文件包含
 #include <openssl/err.h> // 添加 OpenSSL 错误处理头文件包含
 #include <iostream>
@@ -178,12 +179,28 @@ bufferevent* RpcServer::bevCallback(event_base* base, void* arg) {
                                         BEV_OPT_CLOSE_ON_FREE);
 }
 
-/**
- * @brief 处理RPC服务器接收到的HTTP请求
- * 
- * @param req evhttp请求对象指针，用于获取请求信息和发送响应
- * @param arg 未使用的泛型参数（根据常见libevent用法保留）
- */
+void RpcServer::logAudit(const std::map<std::string, std::string>& auditData) {
+    try {
+        nlohmann::json auditLog;
+        for (std::map<std::string, std::string>::const_iterator it = auditData.begin(); it != auditData.end(); ++it) {
+            auditLog[it->first] = it->second;
+        }
+        std::ostringstream oss;
+        oss << time(nullptr);
+        auditLog["timestamp"] = oss.str();
+
+        // 方式2：格式化JSON（推荐用于日志）
+        std::string logEntry = auditLog.dump(4);
+
+        // 写入日志文件或发送到日志系统
+        //logService.write(logEntry);
+        std::cout << "Audit Log: " << logEntry << std::endl;
+
+    } catch (const nlohmann::json::exception& e) {
+        std::cerr << "JSON serialization error: " << e.what() << std::endl;
+    }
+}
+
 void RpcServer::requestHandler(evhttp_request* req, void* arg) {
     nlohmann::json requestJson;
     nlohmann::json id = nullptr;
@@ -288,30 +305,13 @@ void RpcServer::requestHandler(evhttp_request* req, void* arg) {
             sendErrorResponse(req, -32602, e.what(), id);
         }
 
-        #if 1
-        // ========== 审计日志记录阶段 ==========
-        try {
-            nlohmann::json auditLog = {
-                {"client", clientIP},
-                {"port", clientPort},
-                {"method", method},
-                {"timestamp", time(nullptr)}
-            };
-            
-            // 方式1：紧凑JSON
-            // std::string logEntry = auditLog.dump();
-            
-            // 方式2：格式化JSON（推荐用于日志）
-            std::string logEntry = auditLog.dump(4);
-            
-            // 写入日志文件或发送到日志系统
-            //logService.write(logEntry);
-            std::cout << "Audit Log: " << logEntry << std::endl;
-            
-        } catch (const nlohmann::json::exception& e) {
-            std::cerr << "JSON serialization error: " << e.what() << endl;
-        }   
-        #endif     
+        // 调用新的日志函数
+        std::map<std::string, std::string> auditData = {
+            {"client", clientIP},
+            {"port", std::to_string(clientPort)},
+            {"method", method}
+        };
+        logAudit(auditData);
 
     } // ========== 异常处理阶段 ==========
     catch (const nlohmann::json::parse_error& e) {
@@ -328,7 +328,9 @@ void RpcServer::requestHandler(evhttp_request* req, void* arg) {
 // 启动服务
 void RpcServer::start() {
     // 注册通用请求处理器
-    evhttp_set_gencb(http_, requestHandler, this);
+    evhttp_set_gencb(http_, [](evhttp_request* req, void* arg) {
+        static_cast<RpcServer*>(arg)->requestHandler(req, arg);
+    }, this);
     
     // 进入事件循环
     event_base_dispatch(base_);

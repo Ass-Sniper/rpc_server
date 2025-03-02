@@ -13,7 +13,8 @@ MAIN_OBJ = build/main.o
 
 # 编译参数
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -O2
+CXXFLAGS = -Wall -O2
+CXXFLAGS += -std=c++11 
 CXXFLAGS += -DCPP11_SUPPORTED=1
 CXXFLAGS += -I./include -I/usr/include/event2 -I/usr/include/nlohmann 
 #CXXFLAGS += -Iextern/json
