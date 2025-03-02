@@ -1,0 +1,25 @@
+# 生成通用 C/C++ .gitignore 模板
+cat <<EOF > .gitignore
+# 编译产物
+/build/
+/bin/
+/lib/
+*.o
+*.a
+*.so
+*.dll
+*.exe
+
+# IDE 配置文件
+.vscode/
+.idea/
+*.code-workspace
+
+# 日志和临时文件
+*.log
+*.tmp
+*.swp
+
+# 本地覆盖文件
+override/
+EOF
