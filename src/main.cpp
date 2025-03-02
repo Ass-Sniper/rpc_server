@@ -132,17 +132,16 @@ bool verifyCertificateAndKeyMatch(const char* serverCertPath, const char* server
         return false;
     }
 
-    if (certModulusLen != keyModulusLen || memcmp(certModulus, keyModulus, certModulusLen) != 0) {
+    bool match = true;
+    match = (certModulusLen != keyModulusLen || memcmp(certModulus, keyModulus, certModulusLen) != 0);
+    if (!match) {
         std::cerr << "\033[31m客户端证书和私钥不匹配\033[0m" << std::endl;
-        X509_free(cert);
-        EVP_PKEY_free(key);
-        return false;
     } else {
         std::cout << "\033[32m客户端证书和私钥匹配\033[0m" << std::endl;
-        X509_free(cert);
-        EVP_PKEY_free(key);
-        return true;
     }
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return match;
 }
 
 int main(int argc, char* argv[]) {

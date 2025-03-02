@@ -7,12 +7,12 @@ cert = ("client.crt", "client.key")  # 双向认证时使用
 tests = [
     {
         "name": "正常请求",
-        "data": {"jsonrpc": "2.0", "method": "mathService.add", "params": {"a": 3, "b": 4}},
+        "data": {"jsonrpc": "2.0", "method": "MathService.add", "params": {"a": 3, "b": 4}},
         "expected": 200
     },
     {
         "name": "无效参数",
-        "data": {"jsonrpc": "2.0", "method": "mathService.add", "params": {"a": "text"}},
+        "data": {"jsonrpc": "2.0", "method": "MathService.add", "params": {"a": "text"}},
         "expected": 400
     }
 ]

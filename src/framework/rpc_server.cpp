@@ -270,7 +270,11 @@ void RpcServer::requestHandler(evhttp_request* req, void* arg) {
         // ========== 参数提取阶段 ==========
         // 解构请求参数并校验格式
         const std::string method = requestJson["method"];
-        const nlohmann::json params = requestJson.value("params", nlohmann::json());
+        if (!requestJson.contains("params")) {
+            sendErrorResponse(req, -32600, "Missing params", id);
+            return;
+        }
+        const nlohmann::json params = requestJson["params"];
         id = requestJson.value("id", nullptr);
 
         // ========== 方法名解析阶段 ==========

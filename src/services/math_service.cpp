@@ -5,10 +5,16 @@ MathService::MathService() {
 #if CPP11_SUPPORTED
     // 使用 lambda 表达式
     registerMethod("add", [this](const nlohmann::json& params) {
+        if (!params.contains("a") || !params.contains("b")) {
+            return nlohmann::json{{"error", "Missing parameters"}};
+        }
         return nlohmann::json{{"result", add(params["a"], params["b"])}};
     });
 
     registerMethod("subtract", [this](const nlohmann::json& params) {
+        if (!params.contains("a") || !params.contains("b")) {
+            return nlohmann::json{{"error", "Missing parameters"}};
+        }
         return nlohmann::json{{"result", subtract(params["a"], params["b"])}};
     });
 #else
@@ -31,12 +37,18 @@ double MathService::subtract(double a, double b) {
 // 处理 add 方法的静态函数
 nlohmann::json MathService::addHandler(void* context, const nlohmann::json& params) {
     MathService* self = static_cast<MathService*>(context);
+    if (!params.contains("a") || !params.contains("b")) {
+        return nlohmann::json{{"error", "Missing parameters"}};
+    }
     return nlohmann::json{{"result", self->add(params["a"], params["b"])}};
 }
 
 // 处理 subtract 方法的静态函数
 nlohmann::json MathService::subtractHandler(void* context, const nlohmann::json& params) {
     MathService* self = static_cast<MathService*>(context);
+    if (!params.contains("a") || !params.contains("b")) {
+        return nlohmann::json{{"error", "Missing parameters"}};
+    }
     return nlohmann::json{{"result", self->subtract(params["a"], params["b"])}};
 }
 #endif
