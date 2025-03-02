@@ -151,7 +151,11 @@ int main(int argc, char* argv[]) {
 
     // 根据参数决定是否以守护进程模式运行
     if (args.daemon) {
-        daemonize();
+        int result = daemon(0, 0); // 使用标准库中的daemon函数
+        if (result != 0) {
+            std::cerr << "Failed to daemonize: " << strerror(errno) << std::endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
     // 验证服务器证书和私钥匹配性

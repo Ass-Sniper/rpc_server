@@ -1,47 +1,35 @@
-refactor(rpc): 优化服务器核心逻辑与构建流程
+fix(daemon): 修复守护进程初始化编译错误
 
-• 重构RPC服务器线程模型（rpc_server.h/cpp）
-• 优化服务启动参数处理（main.cpp）
-• 调整Makefile编译依赖链（Makefile）
-• 增强HTTP测试脚本错误处理（http_test.sh）
+• 替换非标准daemonize()为POSIX标准daemon()函数（src/main.cpp）
+• 添加必要的unistd.h头文件包含
+• 增强错误处理逻辑，记录守护进程PID
 
-重构细节：
-1. RPC服务端：
-   - 改进连接池管理策略
-   - 添加请求超时保护机制
-   - 优化报文解析性能
+修正前错误:
+error: ‘daemonize’ was not declared in this scope
 
-2. 测试脚本：
-   - 增加重试逻辑（http_test.sh 第42行）
-   - 添加响应时间统计功能
-   - 改进JSON结果校验
+变更影响:
+- 依赖项：需要POSIX兼容环境（Linux/BSD）
+- 配置文件：新增run_as_daemon选项需同步更新文档
+- 日志系统：建议添加守护进程状态日志
 
-3. 构建系统：
-   - 分离调试/发布编译目标
-   - 添加静态代码分析步骤
-   - 优化对象文件依赖关系
+验证方法:
+make clean && make
 
 ------
 
-refactor(rpc): Enhance server core logic and build pipeline
+fix(daemon): Resolve daemon initialization compile error
 
-• Overhaul RPC server threading model (rpc_server.h/cpp)
-• Improve service startup parameter handling (main.cpp)
-• Adjust Makefile compilation dependencies (Makefile)
-• Strengthen HTTP test script error recovery (http_test.sh)
+• Replace non-standard daemonize() with POSIX daemon() (src/main.cpp)
+• Add required unistd.h header inclusion
+• Improve error handling with PID file logging
 
-Key Improvements:
-1. Server-side:
-   - Connection pool management optimization
-   - Request timeout protection
-   - Protocol parsing performance boost
+Error resolved:
+error: ‘daemonize’ was not declared in this scope
 
-2. Testing:
-   - Add retry mechanism (http_test.sh L42)
-   - Introduce response time metrics
-   - Enhance JSON validation
+Dependencies:
+- Requires POSIX-compliant environment (Linux/BSD)
+- Config update needed for run_as_daemon flag
+- Recommend enhancing daemon status logging
 
-3. Build:
-   - Separate debug/release targets
-   - Integrate static code analysis
-   - Optimize object file dependencies
+Verification:
+make clean && make
